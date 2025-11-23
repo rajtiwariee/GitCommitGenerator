@@ -2,10 +2,11 @@
 __pycache__/
 *.py[codz]
 *$py.class
-
+data
+qwen-0.5b-finetuned
 # C extensions
 *.so
-
+docs/*
 # Distribution / packaging
 .Python
 build/
