@@ -7,6 +7,7 @@ qwen-0.5b-finetuned
 # C extensions
 *.so
 docs/*
+CLI_README.md
 # Distribution / packaging
 .Python
 build/
