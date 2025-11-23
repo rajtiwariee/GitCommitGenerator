@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
 Training script for fine-tuning Qwen-0.5B on commit messages
+Supports both full fine-tuning and LoRA
 """
 import os
+# Disable bitsandbytes for regular LoRA (only needed for QLoRA)
+os.environ["BITSANDBYTES_NOWELCOME"] = "1"
 import json
 import torch
 from datasets import load_dataset
@@ -13,6 +16,7 @@ from transformers import (
     Trainer,
     DataCollatorForLanguageModeling,
 )
+from peft import LoraConfig, get_peft_model, TaskType
 import argparse
 
 
@@ -73,14 +77,16 @@ def main(args):
         tokenizer.pad_token = tokenizer.eos_token
     
     # Set dtype based on device
-    # Default to FP32 for stability - FP16 can cause gradient issues
-    if args.use_fp16 and device == "cuda":
-        dtype = torch.float16
+    # Always load in FP32 for stability, let Trainer handle Mixed Precision if requested
+    dtype = torch.float32
+    
+    if device == "cuda" and args.use_fp16:
         use_fp16 = True
-        print(f"   Using FP16 (half precision)")
+        print(f"   Using Mixed Precision (FP32 weights + FP16 compute) - Optimized for speed & stability")
     else:
-        dtype = torch.float32
         use_fp16 = False
+        if device == "cuda":
+            print(f"   Using FP32 (full precision) - Optimized for stability")
     
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
@@ -95,6 +101,35 @@ def main(args):
     print(f"   Parameters: {model.num_parameters():,}")
     print(f"   Memory: {model.get_memory_footprint() / 1e9:.2f} GB")
     print(f"   Dtype: {dtype}")
+    
+    # Apply LoRA if requested
+    if args.use_lora:
+        print(f"\n🔧 Applying LoRA configuration...")
+        lora_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM,
+            r=args.lora_r,  # Rank
+            lora_alpha=args.lora_alpha,  # Scaling factor
+            lora_dropout=args.lora_dropout,
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],  # Qwen2 attention modules
+            bias="none",
+        )
+        model = get_peft_model(model, lora_config)
+        
+        # Fix for gradient checkpointing with LoRA
+        if args.gradient_checkpointing:
+            if hasattr(model, "enable_input_require_grads"):
+                model.enable_input_require_grads()
+            else:
+                def make_inputs_require_grad(module, input, output):
+                    output.requires_grad_(True)
+                model.get_input_embeddings().register_forward_hook(make_inputs_require_grad)
+            print("   Enabled input_require_grads for gradient checkpointing compatibility")
+
+        model.print_trainable_parameters()
+        print(f"✅ LoRA applied!")
+        print(f"   Rank: {args.lora_r}")
+        print(f"   Alpha: {args.lora_alpha}")
+        print(f"   Trainable params: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}")
     
     # Apply torch.compile for speedup (PyTorch 2.0+)
     # Note: Only enabled for CUDA - MPS support is experimental
@@ -151,6 +186,8 @@ def main(args):
     print(f"\n⚙️  Training configuration:")
     print(f"   Epochs: {args.num_epochs}")
     print(f"   Batch size: {args.batch_size}")
+    print(f"   Gradient accumulation: {args.gradient_accumulation_steps}")
+    print(f"   Effective batch size: {args.batch_size * args.gradient_accumulation_steps}")
     print(f"   Learning rate: {args.learning_rate}")
     print(f"   Output dir: {args.output_dir}")
     
@@ -159,15 +196,18 @@ def main(args):
         num_train_epochs=args.num_epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        gradient_checkpointing=args.gradient_checkpointing,
         
         # Optimization
         learning_rate=args.learning_rate,
         weight_decay=0.01,
         warmup_steps=100,
+        max_grad_norm=args.max_grad_norm,
         
         # Logging
         logging_dir=os.path.join(args.output_dir, "logs"),
-        logging_steps=50,
+        logging_steps=10,  # Log more frequently
         
         # Evaluation
         eval_strategy="steps",
@@ -284,14 +324,26 @@ if __name__ == "__main__":
     parser.add_argument(
         "--batch_size",
         type=int,
+        default=8,
+        help="Training batch size per device"
+    )
+    parser.add_argument(
+        "--gradient_accumulation_steps",
+        type=int,
         default=4,
-        help="Training batch size"
+        help="Number of updates steps to accumulate before performing a backward/update pass"
     )
     parser.add_argument(
         "--learning_rate",
         type=float,
         default=5e-5,
         help="Learning rate"
+    )
+    parser.add_argument(
+        "--max_grad_norm",
+        type=float,
+        default=1.0,
+        help="Maximum gradient norm (for gradient clipping)"
     )
     parser.add_argument(
         "--max_length",
@@ -305,6 +357,11 @@ if __name__ == "__main__":
         help="Use torch.compile for speedup (PyTorch 2.0+, recommended for T4 GPU)"
     )
     parser.add_argument(
+        "--gradient_checkpointing",
+        action="store_true",
+        help="Use gradient checkpointing to save memory (slower but allows larger batches)"
+    )
+    parser.add_argument(
         "--compile_mode",
         type=str,
         default="default",
@@ -314,7 +371,32 @@ if __name__ == "__main__":
     parser.add_argument(
         "--use_fp16",
         action="store_true",
-        help="Use FP16 (half precision) training. Faster but can be unstable. Default: FP32"
+        help="Use FP16 (half precision) training. Faster but can be unstable. Default: FP32 (unless LoRA is used)"
+    )
+    
+    # LoRA arguments
+    parser.add_argument(
+        "--use_lora",
+        action="store_true",
+        help="Use LoRA (Low-Rank Adaptation) for parameter-efficient fine-tuning. 4x faster!"
+    )
+    parser.add_argument(
+        "--lora_r",
+        type=int,
+        default=16,
+        help="LoRA rank (default: 16, higher = more parameters but better quality)"
+    )
+    parser.add_argument(
+        "--lora_alpha",
+        type=int,
+        default=32,
+        help="LoRA alpha scaling factor (default: 32, usually 2x rank)"
+    )
+    parser.add_argument(
+        "--lora_dropout",
+        type=float,
+        default=0.05,
+        help="LoRA dropout (default: 0.05)"
     )
     
     args = parser.parse_args()
