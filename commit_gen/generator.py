@@ -37,7 +37,7 @@ class CommitMessageGenerator:
         if self.model is not None:
             return  # Already loaded
         
-        print(f"Loading model from {self.model_path}...")
+        print(f"Loading model ...")
         
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_path,
