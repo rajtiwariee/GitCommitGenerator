@@ -103,6 +103,12 @@ python scripts/plot_loss.py
 - LoRA r=16, alpha=32
 - Mixed Precision (FP32 + FP16)
 
+### Training Loss
+
+![Training Loss](loss_plot.png)
+
+The model converged smoothly from an initial loss of 1.68 to a final loss of ~0.87 over 3 epochs.
+
 ## Project Structure
 
 ```
