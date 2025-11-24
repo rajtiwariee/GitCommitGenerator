@@ -209,3 +209,4 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 commit-gen
+DEMO_SCRIPT.md
