@@ -60,8 +60,8 @@ class CommitMessageGenerator:
     def generate(
         self,
         diff: str,
-        temperature: float = 0.7,
-        max_length: int = 100,
+        temperature: float = 0.0,  # Greedy by default for cleaner output
+        max_length: int = 20,
         top_p: float = 0.9,
     ) -> str:
         """
@@ -69,7 +69,7 @@ class CommitMessageGenerator:
         
         Args:
             diff: Git diff text
-            temperature: Sampling temperature (0.0 = deterministic)
+            temperature: Sampling temperature (0.0 = deterministic, recommended)
             max_length: Maximum length of generated message
             top_p: Nucleus sampling threshold
         
@@ -96,9 +96,9 @@ class CommitMessageGenerator:
             outputs = self.model.generate(
                 **inputs,
                 max_new_tokens=max_length,
-                temperature=temperature,
-                do_sample=True if temperature > 0 else False,
-                top_p=top_p,
+                do_sample=temperature > 0,
+                temperature=temperature if temperature > 0 else None,
+                top_p=top_p if temperature > 0 else None,
                 pad_token_id=self.tokenizer.eos_token_id,
             )
         
@@ -111,10 +111,27 @@ class CommitMessageGenerator:
         else:
             commit_msg = generated_text.strip()
         
-        # Take first line as commit message
-        commit_msg = commit_msg.split('\n')[0].strip()
+        # Clean up - take first line only
+        lines = [line.strip() for line in commit_msg.split('\n') if line.strip()]
+        if lines:
+            commit_msg = lines[0]
         
-        return commit_msg
+        # Remove artifacts (timestamps, issue numbers at the end, etc.)
+        import re
+        commit_msg = re.sub(r'\s*\(\d+\)\s*-\s*\d{4}-\d{2}-\d{2}.*$', '', commit_msg)
+        commit_msg = re.sub(r'\s*-\s*\d{4}-\d{2}-\d{2}.*$', '', commit_msg)
+        commit_msg = re.sub(r'\s*Fixes\s+#\d+.*$', '', commit_msg)
+        commit_msg = re.sub(r'\s*Closes\s+#\d+.*$', '', commit_msg)
+        
+        # Cut at first period if it's getting long
+        if len(commit_msg) > 80 and '.' in commit_msg:
+            commit_msg = commit_msg.split('.')[0] + '.'
+        
+        # Absolute length limit
+        if len(commit_msg) > 100:
+            commit_msg = commit_msg[:97] + '...'
+        
+        return commit_msg.strip()
     
     def unload(self):
         """Unload model from memory"""
