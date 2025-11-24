@@ -1,6 +1,13 @@
 """
 Model loading and commit message generation
 """
+import warnings
+import os
+
+# Suppress warnings for cleaner output
+warnings.filterwarnings("ignore", category=UserWarning)
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
+
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from typing import Optional
@@ -49,7 +56,7 @@ class CommitMessageGenerator:
         self.model = AutoModelForCausalLM.from_pretrained(
             self.model_path,
             trust_remote_code=True,
-            torch_dtype=dtype,
+            dtype=dtype,
         )
         
         self.model = self.model.to(self.device)
