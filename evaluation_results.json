@@ -1,0 +1,81 @@
+{
+  "avg_bleu": 0.02439688266173922,
+  "avg_rouge": {
+    "rouge1": 0.1968056685942743,
+    "rouge2": 0.042028985507246375,
+    "rougeL": 0.181575783536803
+  },
+  "exact_match_rate": 0.0,
+  "examples": [
+    {
+      "diff": "Diff:\nFile: examples/plot_ransac.py -> examples/plot_ransac.py\nLanguage: Python\n\nOld content:\n(empty)...\n\nNew content:\n\"\"\"\n===========================================\nRobust linear model estimation us...",
+      "reference": "Add example plot script for RANSAC",
+      "predicted": "Add simple plot of RANSAC implementation.",
+      "bleu": 0.05372849659117709,
+      "rouge1": 0.5
+    },
+    {
+      "diff": "Diff:\nFile: test/source/se/ericthelin/fractions/GreatestCommonDivisorTest.java -> test/source/se/ericthelin/fractions/GreatestCommonDivisorTest.java\nLanguage: Java\n\nOld content:\npackage se.ericthelin....",
+      "reference": "Check that GreatestCommonDivisor accepts negative second argument",
+      "predicted": "Add unit tests for greatest common divisor method.",
+      "bleu": 0,
+      "rouge1": 0.0
+    },
+    {
+      "diff": "Diff:\nFile: runtests.py -> runtests.py\nLanguage: Python\n\nOld content:\n#!/usr/bin/env python\nimport os\nimport sys\n\nfrom django.conf import settings\ntry:\n    from django import setup\nexcept ImportError:...",
+      "reference": "Set middleware classes to suppress warning on 1.7+",
+      "predicted": "Remove unused middleware classes. They are only used for testing, and they're not needed in",
+      "bleu": 0.013217947626377298,
+      "rouge1": 0.16
+    },
+    {
+      "diff": "Diff:\nFile: pentaho-xul-core/src/org/pentaho/ui/xul/components/XulTreeCol.java -> pentaho-xul-core/src/org/pentaho/ui/xul/components/XulTreeCol.java\nLanguage: Java\n\nOld content:\npackage org.pentaho.ui...",
+      "reference": "Support for Hierarchical trees added.",
+      "predicted": "Add method to get the column type. This will be used in order to determine if this col should be",
+      "bleu": 0,
+      "rouge1": 0.0
+    },
+    {
+      "diff": "Diff:\nFile: app/src/main/java/com/fanpics/opensource/android/modelrecord/ResponseParser.java -> app/src/main/java/com/fanpics/opensource/android/modelrecord/ResponseParser.java\nLanguage: Java\n\nOld con...",
+      "reference": "Move date format to setter",
+      "predicted": "Add missing date format to gson converter. Fixes #148.",
+      "bleu": 0.11868405219520975,
+      "rouge1": 0.42857142857142855
+    },
+    {
+      "diff": "Diff:\nFile: examples/zoomslider.js -> examples/zoomslider.js\nLanguage: JavaScript\n\nOld content:\ngoog.require('ol.Map');\ngoog.require('ol.View2D');\ngoog.require('ol.control.ZoomSlider');\ngoog.require('...",
+      "reference": "Call addControl instead of passing map to control",
+      "predicted": "Fix zoom slider example to use correct resolution. Fixes #1079. Closes #1083.",
+      "bleu": 0.017033186037639283,
+      "rouge1": 0.1
+    },
+    {
+      "diff": "Diff:\nFile: app/src/main/java/org/forestguardian/View/CustomViews/ProfileImageView.java -> app/src/main/java/org/forestguardian/View/CustomViews/ProfileImageView.java\nLanguage: Java\n\nOld content:\n(emp...",
+      "reference": "Add empty custom profile view class and TODO.",
+      "predicted": "Add base view to handle image of user's avatar. TODO: add more profiles, such as the user's own or",
+      "bleu": 0.012109013026441871,
+      "rouge1": 0.27586206896551724
+    },
+    {
+      "diff": "Diff:\nFile: src/test/java/edu/jhuapl/tinkerpop/AccumuloGraphTestUtils.java -> src/test/java/edu/jhuapl/tinkerpop/AccumuloGraphTestUtils.java\nLanguage: Java\n\nOld content:\n/* Copyright 2014 The Johns Ho...",
+      "reference": "Clean up test framework configuration",
+      "predicted": "Add test for Accumulo graph utils.  This will be used later when we add tests for other classes.",
+      "bleu": 0.010802314890908065,
+      "rouge1": 0.08695652173913045
+    },
+    {
+      "diff": "Diff:\nFile: src/edu/drexel/tm/cs338/textacular/ProjectFrame.java -> src/edu/drexel/tm/cs338/textacular/ProjectFrame.java\nLanguage: Java\n\nOld content:\npackage edu.drexel.tm.cs338.textacular;\n\nimport ja...",
+      "reference": "Add JTabbedPane and button panel to main frame",
+      "predicted": "Add panel for compiling and clearing the text. Add button to compile the current template. Remove",
+      "bleu": 0.01839381624963888,
+      "rouge1": 0.4166666666666667
+    },
+    {
+      "diff": "Diff:\nFile: app/src/component/Button.tsx -> app/src/component/Button.tsx\nLanguage: TypeScript\n\nOld content:\nimport * as React from \"react\";\n\nimport \"./style/Button.css\";\n\ninterface IProps {\n    classN...",
+      "reference": "Set undefined to onClick prop when nothing is provided by parent",
+      "predicted": "Fix button hover color on mobile devices. Fixes #1298. Fixes #1304. Fixes #1367. Fixes",
+      "bleu": 0,
+      "rouge1": 0.0
+    }
+  ]
+}

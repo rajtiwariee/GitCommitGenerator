@@ -8,6 +8,7 @@ qwen-0.5b-finetuned
 *.so
 docs/*
 CLI_README.md
+.DS_Store
 # Distribution / packaging
 .Python
 build/

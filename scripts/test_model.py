@@ -29,10 +29,19 @@ def load_model_and_tokenizer(model_path, device):
     print(f"📦 Loading model from {model_path}...")
     
     tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    
+    # Set dtype based on device
+    if device == "cuda":
+        dtype = torch.float16
+    elif device == "mps":
+        dtype = torch.float32  # MPS works better with FP32
+    else:
+        dtype = torch.float32
+    
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
         trust_remote_code=True,
-        torch_dtype=torch.float16 if device == "cuda" else torch.float32,
+        torch_dtype=dtype,
     )
     model = model.to(device)
     model.eval()
@@ -47,14 +56,32 @@ def extract_commit_message(generated_text, input_text):
     if input_text in generated_text:
         generated_text = generated_text[len(input_text):].strip()
     
-    # Extract just the commit message (before any extra text)
-    lines = generated_text.split('\n')
-    commit_msg = lines[0].strip() if lines else generated_text.strip()
+    # Take only the first line
+    lines = [line.strip() for line in generated_text.split('\n') if line.strip()]
+    if not lines:
+        return generated_text.strip()
     
-    return commit_msg
+    commit_msg = lines[0]
+    
+    # Remove common artifacts
+    # Remove dates/timestamps (e.g., "2017-03-13", "(2)")
+    import re
+    commit_msg = re.sub(r'\s*\(\d+\)\s*-\s*\d{4}-\d{2}-\d{2}.*$', '', commit_msg)
+    commit_msg = re.sub(r'\s*-\s*\d{4}-\d{2}-\d{2}.*$', '', commit_msg)
+    commit_msg = re.sub(r'\s*\(\d+\).*$', '', commit_msg)
+    
+    # Remove trailing punctuation artifacts
+    commit_msg = re.sub(r'\.\s*\(.*$', '.', commit_msg)
+    
+    # Limit length (commit messages should be ~50-72 chars)
+    if len(commit_msg) > 100:
+        # Try to cut at a natural boundary
+        commit_msg = commit_msg[:100].rsplit(' ', 1)[0]
+    
+    return commit_msg.strip()
 
 
-def generate_commit_message(model, tokenizer, diff_text, device, max_new_tokens=100):
+def generate_commit_message(model, tokenizer, diff_text, device, max_new_tokens=30):
     """Generate a commit message for a given diff"""
     # Create prompt (matching training format)
     prompt = f"Write a git commit message:\n\n{diff_text}\n\nCommit message:\n"
@@ -66,9 +93,10 @@ def generate_commit_message(model, tokenizer, diff_text, device, max_new_tokens=
         outputs = model.generate(
             **inputs,
             max_new_tokens=max_new_tokens,
-            temperature=0.7,
+            temperature=0.2,  # Very low temperature for focused output
             do_sample=True,
-            top_p=0.9,
+            top_p=0.85,
+            repetition_penalty=1.2,  # Penalize repetition
             pad_token_id=tokenizer.eos_token_id,
         )
     
@@ -179,9 +207,16 @@ def main():
     parser.add_argument("--num_samples", type=int, default=None, help="Number of test samples (default: all)")
     args = parser.parse_args()
     
-    # Check device
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"🖥️  Device: {device}")
+    # Check device - prioritize MPS > CUDA > CPU
+    if torch.backends.mps.is_available():
+        device = "mps"
+        print(f"🖥️  Device: MPS (Apple Silicon GPU)")
+    elif torch.cuda.is_available():
+        device = "cuda"
+        print(f"🖥️  Device: CUDA GPU")
+    else:
+        device = "cpu"
+        print(f"🖥️  Device: CPU (⚠️  This will be slow!)")
     
     # Load model
     model, tokenizer = load_model_and_tokenizer(args.model_path, device)
