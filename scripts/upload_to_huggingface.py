@@ -33,20 +33,19 @@ tags:
 - commit-message
 - qwen2
 - lora
-base_model: muellerzr/qwen-0.5-git-commit-message-generation
 datasets:
 - bigcode/commitpackft
 ---
 
 # Git Commit Message Generator
 
-Fine-tuned [Qwen-0.5B](https://huggingface.co/muellerzr/qwen-0.5-git-commit-message-generation) model for generating professional Git commit messages.
+Fine-tuned Qwen-0.5B model for generating professional Git commit messages from code diffs.
 
 ## Model Description
 
 This model was fine-tuned using LoRA (Low-Rank Adaptation) on the CommitPackFT dataset to generate concise, professional commit messages from git diffs.
 
-**Base Model**: `muellerzr/qwen-0.5-git-commit-message-generation`  
+**Base Model**: Qwen-0.5B  
 **Fine-tuning Method**: LoRA (r=16, alpha=32)  
 **Training Data**: 55K filtered commits from CommitPackFT  
 **Languages**: Python, JavaScript, TypeScript, Java, C++, Go, Rust, and more
@@ -94,27 +93,24 @@ inputs = tokenizer(prompt, return_tensors="pt")
 with torch.no_grad():
     outputs = model.generate(
         **inputs,
-        max_new_tokens=100,
-        temperature=0.7,
-        do_sample=True,
-        top_p=0.9,
+        max_new_tokens=30,
+        do_sample=False,  # Deterministic
+        pad_token_id=tokenizer.eos_token_id,
     )
 
 message = tokenizer.decode(outputs[0], skip_special_tokens=True)
 print(message.split("Commit message:")[-1].strip())
-# Output: "Fix null check in login function"
+# Output: "Check for user existence before accessing password"
 ```
 
 ### CLI Tool
 
-For easier usage, install the companion CLI tool:
+For easier usage, install the companion CLI tool from the [GitHub repository](https://github.com/rajtiwariee/GitCommitGenerator):
 
 ```bash
-pip install commit-gen
+pip install -e .
 commit-gen generate --commit
 ```
-
-See the [GitHub repository](https://github.com/YOUR_USERNAME/GitCommitGenerator) for more details.
 
 ## Training Details
 
@@ -162,7 +158,7 @@ This model is intended to assist developers in writing commit messages, not repl
 
 ```bibtex
 @misc{{git-commit-generator,
-  author = {{Your Name}},
+  author = {{Raj Tiwari}},
   title = {{Git Commit Message Generator}},
   year = {{2024}},
   publisher = {{Hugging Face}},

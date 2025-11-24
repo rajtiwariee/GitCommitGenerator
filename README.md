@@ -1,91 +1,150 @@
 # Git Commit Message Generator
 
-AI-powered tool that generates professional git commit messages from code diffs using a fine-tuned language model.
+AI-powered CLI tool that automatically generates professional git commit messages from code diffs using a fine-tuned Qwen-0.5B language model.
+
+**Live Demo:** [HuggingFace Model](https://huggingface.co/rajtiwariee/auto-commit)
+
+## Features
+
+- **Accurate** - Trained on 55K+ real commit messages
+- **Fast** - Generates messages in ~2 seconds
+- **Consistent** - Deterministic output (same diff = same message)
+- **Clean** - Professional, concise commit messages
+- **Easy** - Simple CLI: `commit-gen generate`
+
+## Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/rajtiwariee/GitCommitGenerator
+cd GitCommitGenerator
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Install CLI tool
+pip install -e .
+```
+
+### Usage
+
+```bash
+# Generate message for staged changes
+git add file.py
+commit-gen generate
+
+# Generate and auto-commit
+commit-gen generate --commit
+
+# Interactive mode (edit before committing)
+commit-gen generate --commit --interactive
+
+# View configuration
+commit-gen config --show
+```
+
+## Model Training
+
+### Dataset Preparation
+
+```bash
+# Download CommitPackFT dataset
+python scripts/download_dataset.py
+
+# Clean and filter data
+python scripts/prepare_dataset.py
+
+# Format for training
+python scripts/format_for_training.py
+```
+
+### Fine-tuning
+
+```bash
+# Train with LoRA (recommended: ~7.5 hours on T4 GPU)
+python train.py \
+  --num_epochs 3 \
+  --batch_size 4 \
+  --gradient_accumulation_steps 8 \
+  --use_lora \
+  --gradient_checkpointing \
+  --max_length 384 \
+  --use_fp16
+```
+
+### Evaluation
+
+```bash
+# Run automated metrics
+python scripts/test_model.py --num_samples 100
+
+# Interactive testing
+python scripts/qualitative_test.py
+
+# Plot training loss
+python scripts/plot_loss.py
+```
+
+## Model Details
+
+**Base Model:** Qwen-0.5B  
+**Training Method:** LoRA (Low-Rank Adaptation)  
+**Dataset:** CommitPackFT (55K filtered samples)  
+**Hardware:** T4 GPU (16GB VRAM)  
+**Training Time:** ~7.5 hours  
+**Parameters:** 493M (base) + 35MB (LoRA adapters)
+
+**Training Configuration:**
+- Epochs: 3
+- Batch Size: 4 (effective: 32 with gradient accumulation)
+- Learning Rate: 5e-5
+- LoRA r=16, alpha=32
+- Mixed Precision (FP32 + FP16)
 
 ## Project Structure
 
 ```
 GitCommitGenerator/
-├── docs/                    # Documentation
-│   ├── PROJECT_PLAN.md     # Overall project plan
-│   ├── FINETUNING_PLAN_0.5B.md  # Detailed fine-tuning guide
-│   ├── NEXT_STEPS.md       # Current phase roadmap
-│   └── BASELINE_RESULTS.md # Baseline model evaluation
-├── scripts/                # Data preparation scripts
+├── commit_gen/              # CLI tool package
+│   ├── cli.py              # Main CLI interface
+│   ├── generator.py        # Model inference
+│   ├── git_utils.py        # Git integration
+│   └── config.py           # Configuration
+├── scripts/                # Utilities
 │   ├── download_dataset.py
 │   ├── prepare_dataset.py
-│   └── format_for_training.py
-├── data/                   # Dataset storage (gitignored)
-│   ├── raw/
-│   ├── processed/
-│   └── formatted/
-├── test_base_model.py     # Model testing script
-└── requirements.txt       # Dependencies
+│   ├── test_model.py
+│   ├── qualitative_test.py
+│   └── upload_to_huggingface.py
+├── train.py                # Training script
+├── setup.py                # Package setup
+└── requirements.txt        # Dependencies
 ```
-
-## Quick Start
-
-### 1. Setup Environment
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-# or with uv
-uv add -r requirements.txt
-```
-
-### 2. Test Base Model (Optional)
-
-```bash
-python test_base_model.py
-```
-
-### 3. Prepare Dataset
-
-```bash
-# Download CommitPackFT (100K samples, ~10-15 min)
-python scripts/download_dataset.py
-
-# Clean and filter data (~5 min)
-python scripts/prepare_dataset.py
-
-# Format for training (~2 min)
-python scripts/format_for_training.py
-```
-
-### 4. Train Model
-
-```bash
-# Coming soon: train.py
-# Training time: 6-8 hours on T4 GPU
-```
-
-## Progress
-
-- [x] Research & Planning
-- [x] Environment Setup
-- [x] Baseline Testing
-- [ ] Dataset Preparation (Current Phase)
-- [ ] Model Fine-tuning
-- [ ] Evaluation
-- [ ] CLI Tool Development
-
-## Model
-
-**Base Model:** `muellerzr/qwen-0.5-git-commit-message-generation` (0.5B parameters)  
-**Training Method:** Full fine-tuning  
-**Dataset:** CommitPackFT (100K samples)  
-**Hardware:** T4 GPU (16GB VRAM)
 
 ## Documentation
 
-See `docs/` folder for detailed documentation:
-- **PROJECT_PLAN.md** - Overall project plan and research
-- **FINETUNING_PLAN_0.5B.md** - Complete fine-tuning guide with code
-- **NEXT_STEPS.md** - Current phase instructions
-- **BASELINE_RESULTS.md** - Baseline model evaluation
+- **CLI_README.md** - Detailed CLI usage guide
+- **DEMO_SCRIPT.md** - Demo/presentation script
+
+## Publishing to HuggingFace
+
+```bash
+# Set your token
+export HF_TOKEN="your_token_here"
+
+# Upload model
+python scripts/upload_to_huggingface.py \
+  --model_path ./qwen-0.5b-finetuned/final \
+  --repo_name your-username/model-name \
+  --metrics_file evaluation_results.json
+```
 
 ## License
 
 MIT
-# Test
+
+## Author
+
+Raj Tiwari ([@rajtiwariee](https://github.com/rajtiwariee))
