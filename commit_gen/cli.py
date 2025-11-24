@@ -17,8 +17,8 @@ def cmd_generate(args):
     
     # Check if in a git repository
     if not repo.is_git_repo():
-        print("❌ Error: Not a Git repository")
-        print("   Run this command inside a Git repository")
+        print("Error: Not a Git repository")
+        print("Run this command inside a Git repository")
         return 1
     
     # Get diff
@@ -30,9 +30,9 @@ def cmd_generate(args):
         diff = repo.get_unstaged_diff()
     
     if not diff.strip():
-        print("⚠️  No changes to commit")
+        print("No changes to commit")
         if args.staged:
-            print("   Stage some changes with: git add <files>")
+            print("Stage some changes with: git add <files>")
         return 1
     
     # Format diff for model
@@ -42,7 +42,9 @@ def cmd_generate(args):
     model_path = args.model_path or config.get("model_path")
     generator = CommitMessageGenerator(model_path)
     
-    print("🤖 Generating commit message...\n")
+    print("-" * 60)
+    print("Generating commit message...")
+    print("-" * 60)
     
     try:
         message = generator.generate(
@@ -52,8 +54,8 @@ def cmd_generate(args):
             top_p=config.get("top_p"),
         )
         
-        print(f"✅ Generated Message:")
-        print(f"   {message}\n")
+        print(f"\nGenerated Message:")
+        print(f"  {message}\n")
         
         # Commit or show interactive prompt
         if args.commit:
@@ -64,17 +66,17 @@ def cmd_generate(args):
                     if edited:
                         message = edited
                 except KeyboardInterrupt:
-                    print("\n⚠️  Commit cancelled")
+                    print("\nCommit cancelled")
                     return 1
             
-            print("📝 Creating commit...")
+            print("Creating commit...")
             repo.create_commit(message)
-            print("✅ Commit created successfully!")
+            print("Commit created successfully!")
         
         return 0
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         return 1
 
 
@@ -87,18 +89,20 @@ def cmd_test(args):
         with open(args.diff_file, 'r') as f:
             diff = f.read()
     else:
-        print("📝 Paste your diff (press Ctrl+D when done):")
+        print("Paste your diff (press Ctrl+D when done):")
         diff = sys.stdin.read()
     
     if not diff.strip():
-        print("❌ Error: Empty diff provided")
+        print("Error: Empty diff provided")
         return 1
     
     # Load model and generate
     model_path = args.model_path or config.get("model_path")
     generator = CommitMessageGenerator(model_path)
     
-    print("\n🤖 Generating commit message...\n")
+    print("-" * 60)
+    print("Generating commit message...")
+    print("-" * 60)
     
     try:
         message = generator.generate(
@@ -107,12 +111,12 @@ def cmd_test(args):
             max_length=args.max_length or config.get("max_length"),
         )
         
-        print(f"✅ Generated Message:")
-        print(f"   {message}\n")
+        print(f"\nGenerated Message:")
+        print(f"  {message}\n")
         return 0
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
         return 1
 
 
@@ -121,23 +125,25 @@ def cmd_config(args):
     config = Config()
     
     if args.show:
-        print("📋 Current Configuration:")
+        print("-" * 60)
+        print("Current Configuration:")
+        print("-" * 60)
         for key, value in config.show().items():
-            print(f"   {key}: {value}")
+            print(f"  {key}: {value}")
         return 0
     
     # Set configuration values
     if args.model_path:
         config.set("model_path", args.model_path)
-        print(f"✅ Set model_path = {args.model_path}")
+        print(f"Set model_path = {args.model_path}")
     
     if args.temperature is not None:
         config.set("temperature", args.temperature)
-        print(f"✅ Set temperature = {args.temperature}")
+        print(f"Set temperature = {args.temperature}")
     
     if args.max_length is not None:
         config.set("max_length", args.max_length)
-        print(f"✅ Set max_length = {args.max_length}")
+        print(f"Set max_length = {args.max_length}")
     
     return 0
 
