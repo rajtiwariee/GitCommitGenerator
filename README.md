@@ -6,7 +6,7 @@ AI-powered CLI tool that automatically generates professional git commit message
 
 ## Features
 
-- **Accurate** - Trained on 55K+ real commit messages
+- **Accurate** - Trained on 100K+ real commit messages
 - **Fast** - Generates messages in ~2 seconds
 - **Consistent** - Deterministic output (same diff = same message)
 - **Clean** - Professional, concise commit messages
