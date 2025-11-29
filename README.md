@@ -14,11 +14,9 @@ AI-powered CLI tool that automatically generates professional git commit message
 
 ## Demo
 
-<video src="assets/project_demo.mov" controls width="100%">
-  Your browser does not support the video tag.
-</video>
+[![Watch the Demo](https://img.youtube.com/vi/g8Wo_WUckbU/maxresdefault.jpg)](https://www.youtube.com/watch?v=g8Wo_WUckbU)
 
-*The tool in action - generating commit messages from git diffs*
+*Click to watch the tool in action - generating commit messages from git diffs*
 
 ## Quick Start
 
