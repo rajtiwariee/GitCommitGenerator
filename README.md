@@ -12,6 +12,12 @@ AI-powered CLI tool that automatically generates professional git commit message
 - **Clean** - Professional, concise commit messages
 - **Easy** - Simple CLI: `commit-gen generate`
 
+## Demo
+
+https://github.com/user-attachments/assets/project_demo.mov
+
+*Watch the tool in action generating commit messages from git diffs*
+
 ## Quick Start
 
 ### Installation
@@ -105,7 +111,7 @@ python scripts/plot_loss.py
 
 ### Training Loss
 
-![Training Loss](loss_plot.png)
+![Training Loss](assets/loss_plot.png)
 
 The model converged smoothly from an initial loss of 1.68 to a final loss of ~0.87 over 3 epochs.
 
